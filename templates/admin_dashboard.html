@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Admin dashboard | CivicConnect{% endblock %}{% block content %}
+<div class="page-heading"><span class="eyebrow">CONTROL CENTER</span><h1>Admin dashboard</h1><p>Monitor reports, coordinate departments and measure community response.</p></div>
+<div class="stats-grid admin-stats"><div class="stat-card"><span>Total complaints</span><strong>{{ stats.total }}</strong></div><div class="stat-card"><span>Submitted</span><strong>{{ stats.submitted }}</strong></div><div class="stat-card"><span>In progress</span><strong>{{ stats.progress }}</strong></div><div class="stat-card"><span>Resolved</span><strong>{{ stats.resolved }}</strong></div><div class="stat-card"><span>Citizens</span><strong>{{ stats.users }}</strong></div></div>
+<div class="charts-grid"><div class="chart-card"><h3>Complaints by category</h3><canvas id="categoryChart"></canvas></div><div class="chart-card"><h3>Complaint status</h3><canvas id="statusChart"></canvas></div></div>
+<script id="category-data" type="application/json">{{ category_data|tojson }}</script><script id="status-data" type="application/json">{{ status_data|tojson }}</script>
+<div class="section-heading"><div><span class="eyebrow">CASE MANAGEMENT</span><h2>All complaints</h2></div></div>
+{% include "partials/complaint_table.html" %}{% endblock %}

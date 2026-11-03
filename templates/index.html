@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% block title %}CivicConnect | Better neighborhoods{% endblock %}
+{% block content %}
+<section class="hero">
+ <div class="hero-copy"><span class="eyebrow">SMARTER PUBLIC SERVICES</span><h1>Your city.<br><em>Your voice.</em><br>Real change.</h1>
+ <p>Report local issues, bring neighbors together and follow every complaint from submission to resolution.</p>
+ <div class="hero-actions"><a class="btn primary" href="{{ url_for('new_complaint') if current_user and current_role=='citizen' else url_for('register') }}">Report an Issue <span>→</span></a><a class="btn ghost" href="{{ url_for('public_complaints') }}">Explore complaints</a></div>
+ <div class="trust-note"><span class="pulse"></span> Community-powered civic action</div></div>
+ <div class="hero-card"><div class="map-art"><div class="map-grid"></div><div class="map-road road-one"></div><div class="map-road road-two"></div><div class="map-pin pin-a">!</div><div class="map-pin pin-b">!</div><div class="map-pin pin-c">!</div><div class="map-label">LIVE COMMUNITY ISSUES</div></div><div class="floating-stat"><strong>{{ stats.total }}</strong><span>issues reported</span><b>↗</b></div></div>
+</section>
+<section class="stats-grid">
+ <div class="stat-card"><span>Total reports</span><strong>{{ stats.total }}</strong><small>Community submissions</small></div>
+ <div class="stat-card"><span>Resolved</span><strong>{{ stats.resolved }}</strong><small>Issues addressed</small></div>
+ <div class="stat-card"><span>Being handled</span><strong>{{ stats.open }}</strong><small>Open complaints</small></div>
+ <div class="stat-card"><span>Areas represented</span><strong>{{ stats.areas }}</strong><small>Locations reported</small></div>
+</section>
+<div class="section-heading"><div><span class="eyebrow">COMMUNITY FEED</span><h2>Recent reports</h2></div><a class="text-link" href="{{ url_for('public_complaints') }}">View all reports →</a></div>
+{% if complaints %}<div class="complaint-grid">{% for c in complaints %}<article class="complaint-card">
+ <div class="card-top"><span class="tag">{{ c.category }}</span><span class="status {{ c.status|lower|replace(' ','-') }}">{{ c.status }}</span></div>
+ <h3><a href="{{ url_for('complaint_detail', complaint_id=c.id) }}">{{ c.title }}</a></h3><p>{{ c.description[:125] }}{% if c.description|length > 125 %}…{% endif %}</p>
+ <div class="card-meta"><span>📍 {{ c.location_text or 'Location not specified' }}</span><span>▲ {{ c.votes }}</span></div>
+ </article>{% endfor %}</div>{% else %}<div class="empty-state"><h3>No reports yet</h3><p>Be the first to report an issue in your community.</p><a class="btn primary" href="{{ url_for('register') }}">Create an account</a></div>{% endif %}
+<section class="bottom-cta"><div><span class="eyebrow">SMALL REPORTS. BIG IMPACT.</span><h2>See a problem?<br>Help get it fixed.</h2></div><a class="btn light" href="{{ url_for('new_complaint') if current_user and current_role=='citizen' else url_for('register') }}">Submit a complaint →</a></section>
+{% endblock %}

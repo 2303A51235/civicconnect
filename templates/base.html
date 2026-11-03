@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CivicConnect{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('index') }}"><span class="brand-icon">C</span> CivicConnect</a>
+  <nav>
+    <a href="{{ url_for('public_complaints') }}">Public Complaints</a>
+    {% if current_user %}
+      {% if current_role == 'citizen' %}<a href="{{ url_for('my_complaints') }}">My Complaints</a>{% endif %}
+      {% if current_role == 'admin' %}<a href="{{ url_for('admin_dashboard') }}">Admin</a>{% endif %}
+      {% if current_role == 'staff' %}<a href="{{ url_for('staff_dashboard') }}">Department</a>{% endif %}
+      <span class="nav-user">{{ current_user }}</span><a class="nav-button" href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">Login</a><a class="nav-button" href="{{ url_for('register') }}">Get Started</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="flash-wrap">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}<button onclick="this.parentElement.remove()">×</button></div>{% endfor %}</div>{% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer><span>© 2026 CivicConnect</span><span>Report. Track. Resolve.</span></footer>
+</body></html>

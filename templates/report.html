@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block title %}Report an issue | CivicConnect{% endblock %}{% block content %}
+<div class="page-heading"><span class="eyebrow">CITIZEN ACTION</span><h1>Report an issue</h1><p>Give your local department the details it needs to take action.</p></div>
+<form class="form-card wide-form" method="post" enctype="multipart/form-data">
+ <div class="form-grid"><label class="span-2">Complaint title<input name="title" required maxlength="120" placeholder="e.g. Large pothole near the main road"></label>
+ <label class="span-2">Description<textarea name="description" rows="5" required placeholder="Describe what happened, how long it has been happening and why it needs attention..."></textarea></label>
+ <label class="span-2">Photo (optional)<input type="file" name="photo" accept="image/*"><small>JPG, PNG, WEBP or GIF. Maximum 5 MB.</small></label>
+ <label class="span-2">Location name<input name="location_text" id="location_text" placeholder="Street, landmark or area"></label>
+ <div class="span-2"><div class="map-heading"><strong>Pin the issue location</strong><button type="button" class="small-button" id="locate-me">Use my location</button></div><div id="pick-map" class="map-box"></div><small>Click the map to place a pin. Coordinates are saved with your complaint.</small></div>
+ <input type="hidden" name="latitude" id="latitude"><input type="hidden" name="longitude" id="longitude">
+ </div><div class="form-actions"><a class="btn ghost" href="{{ url_for('my_complaints') }}">Cancel</a><button class="btn primary">Submit complaint →</button></div>
+</form>{% endblock %}
