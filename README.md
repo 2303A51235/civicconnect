@@ -1,50 +1,53 @@
-# CivicConnect – Smart Public Complaint Management System
+# CivicConnect — Smart Public Complaint Management System
 
-A locally runnable Flask + SQLite project for reporting and tracking civic complaints.
+A Flask + SQLite civic issue reporting demo with citizen, staff and admin workflows; offline keyword-based category/priority suggestions; geocoded location search; interactive OpenStreetMap maps; and complaint editing.
 
-## Requirements
-- Python 3.9 or newer
-- Internet connection for OpenStreetMap tiles and Leaflet map assets (the rest of the app runs locally)
+## Features
+- Citizen registration, login and complaint history
+- Create and edit complaints (title, description, category, priority, photo and location)
+- Explicit category selection or automatic category suggestion
+- Priority selection or automatic priority suggestion
+- Search places/addresses with OpenStreetMap Nominatim, use device location, click or drag a map pin, and reverse-geocode the selected point
+- Complaint detail map with a popup describing the selected issue location
+- Public complaint feed with search, category filtering and a map of all geolocated reports
+- Complaint upvotes and activity timeline
+- Admin dashboard and department staff status updates
+- SQLite database created automatically on startup
 
-## Run on Windows
-1. Extract the ZIP.
-2. Open Command Prompt / PowerShell in the `CivicConnect` folder.
-3. (Recommended) Create a virtual environment:
+## Run locally (Windows)
+1. Install Python 3.10+.
+2. Open a terminal in this folder.
+3. Create/activate a virtual environment (optional but recommended):
    ```bash
-   python -m venv venv
-   venv\Scripts\activate
+   python -m venv .venv
+   .venv\\Scripts\\activate
    ```
-4. Install dependencies:
+4. Install dependencies and start:
    ```bash
    pip install -r requirements.txt
-   ```
-5. Start the app:
-   ```bash
    python app.py
    ```
-6. Open http://127.0.0.1:5000
+5. Open http://127.0.0.1:5000
 
-The SQLite database is created automatically as `database.db`.
+You can also double-click `run.bat` on Windows.
 
 ## Demo accounts
 - Admin: `admin@civicconnect.local` / `Admin@123`
-- Department staff: `staff@civicconnect.local` / `Staff@123`
-- Citizen: create an account using Register.
+- Staff: `staff@civicconnect.local` / `Staff@123`
+- Citizen: register through the app.
 
-Change the demo passwords and `SECRET_KEY` before any public deployment.
+Change demo passwords before sharing a public deployment.
 
-## Included functionality
-- Citizen registration and login (hashed passwords)
-- Submit complaints with description, optional photo and map-selected coordinates
-- Offline keyword-based AI-assisted category, department and priority suggestions
-- Public complaint list, search and category filter
-- Complaint details, timeline and one-vote-per-citizen upvoting
-- Admin dashboard with counts and charts
-- Department staff dashboard
-- Admin/staff status updates and department assignment
-- SQLite persistence
+## Deploy on Render
+- Runtime: Python
+- Build command: `pip install -r requirements.txt`
+- Start command: `python -c "from app import init_db; init_db()" && gunicorn app:app`
+- Add environment variable `SECRET_KEY` with a long random value.
 
-## Notes
-- The AI classifier is deliberately lightweight and runs locally without API keys or model downloads. It is a keyword-scoring baseline, not a trained predictive model. It can be replaced by a scikit-learn model later.
-- Uploaded images are saved in `static/uploads/`. For production, use a managed object store and validate uploads more rigorously.
-- This is an educational prototype, not an official government complaint service.
+**Storage note:** SQLite and uploaded photos are stored locally. Render's free web service filesystem is ephemeral, so data and uploads may be lost on redeploy/restart. Use a persistent disk or managed database/object storage for production records.
+
+## Location search notes
+Place search and reverse geocoding use the public OpenStreetMap Nominatim service; map tiles use OpenStreetMap. These features require internet access and are subject to the provider's fair-use/rate limits. Browser geolocation requires permission and a secure context (localhost or HTTPS).
+
+## AI note
+The built-in classifier is an explainable keyword-based baseline, not a trained machine-learning model. It runs offline and can be replaced with a trained model later.

@@ -41,6 +41,7 @@ def close_db(error=None):
         db.close()
 
 def init_db():
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     db = sqlite3.connect(DATABASE)
     db.execute("PRAGMA foreign_keys = ON")
     db.executescript("""
@@ -223,14 +224,29 @@ def new_complaint():
         lng = request.form.get("longitude") or None
         if not title or not description:
             flash("Title and description are required.", "danger")
-            return render_template("report.html")
+            return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=None)
+        try:
+            lat = float(lat) if lat else None
+            lng = float(lng) if lng else None
+            if lat is not None and not (-90 <= lat <= 90): raise ValueError()
+            if lng is not None and not (-180 <= lng <= 180): raise ValueError()
+        except ValueError:
+            flash("Please select a valid map location.", "danger")
+            return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=None)
         prediction = predict_complaint(title + " " + description)
+        selected_category = request.form.get("category", "Auto detect")
+        if selected_category in DEPARTMENTS:
+            prediction["category"] = selected_category
+            prediction["department"] = DEPARTMENTS[selected_category]
+        selected_priority = request.form.get("priority", "Auto detect")
+        if selected_priority in {"Low", "Medium", "High", "Critical"}:
+            prediction["priority"] = selected_priority
         photo_name = None
         photo = request.files.get("photo")
         if photo and photo.filename:
             if not allowed_file(photo.filename):
                 flash("Please upload a JPG, PNG, WEBP or GIF image.", "danger")
-                return render_template("report.html")
+                return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=None)
             safe_name = secure_filename(photo.filename)
             photo_name = f"{secrets.token_hex(8)}_{safe_name}"
             photo.save(os.path.join(UPLOAD_FOLDER, photo_name))
@@ -249,7 +265,57 @@ def new_complaint():
         get_db().commit()
         flash(f"Complaint #{complaint_id} submitted. Suggested category: {prediction['category']}.", "success")
         return redirect(url_for("complaint_detail", complaint_id=complaint_id))
-    return render_template("report.html")
+    return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=None)
+
+@app.route("/complaints/<int:complaint_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_complaint(complaint_id):
+    db = get_db()
+    complaint = db.execute("SELECT * FROM complaints WHERE id=?", (complaint_id,)).fetchone()
+    if not complaint:
+        abort(404)
+    if session.get("role") != "admin" and complaint["user_id"] != session.get("user_id"):
+        abort(403)
+    if complaint["status"] == "Resolved" and session.get("role") != "admin":
+        flash("Resolved complaints can no longer be edited.", "warning")
+        return redirect(url_for("complaint_detail", complaint_id=complaint_id))
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        location_text = request.form.get("location_text", "").strip()
+        category = request.form.get("category", "Other")
+        priority = request.form.get("priority", "Medium")
+        if not title or not description or category not in DEPARTMENTS or priority not in {"Low", "Medium", "High", "Critical"}:
+            flash("Please complete the required fields with valid options.", "danger")
+            return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=complaint)
+        lat = request.form.get("latitude") or None
+        lng = request.form.get("longitude") or None
+        try:
+            lat = float(lat) if lat else None
+            lng = float(lng) if lng else None
+            if lat is not None and not (-90 <= lat <= 90): raise ValueError()
+            if lng is not None and not (-180 <= lng <= 180): raise ValueError()
+        except ValueError:
+            flash("Please choose a valid map location.", "danger")
+            return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=complaint)
+        photo_name = complaint["photo"]
+        photo = request.files.get("photo")
+        if photo and photo.filename:
+            if not allowed_file(photo.filename):
+                flash("Please upload a JPG, PNG, WEBP or GIF image.", "danger")
+                return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=complaint)
+            safe_name = secure_filename(photo.filename)
+            photo_name = f"{secrets.token_hex(8)}_{safe_name}"
+            photo.save(os.path.join(UPLOAD_FOLDER, photo_name))
+        now = datetime.now().isoformat(timespec="seconds")
+        db.execute("""UPDATE complaints SET title=?,description=?,category=?,department=?,priority=?,latitude=?,longitude=?,location_text=?,photo=?,updated_at=? WHERE id=?""",
+                   (title, description, category, DEPARTMENTS[category], priority, lat, lng, location_text, photo_name, now, complaint_id))
+        db.execute("INSERT INTO complaint_updates(complaint_id,user_id,status,note,created_at) VALUES(?,?,?,?,?)",
+                   (complaint_id, session["user_id"], complaint["status"], "Complaint details edited.", now))
+        db.commit()
+        flash("Complaint updated successfully.", "success")
+        return redirect(url_for("complaint_detail", complaint_id=complaint_id))
+    return render_template("report.html", categories=list(DEPARTMENTS.keys()), complaint=complaint)
 
 @app.route("/complaints/<int:complaint_id>")
 def complaint_detail(complaint_id):
